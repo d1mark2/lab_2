@@ -4,8 +4,6 @@
 #include <string.h>
 #include "parser.h"
 
-int letter_indexes[26] = {0};
-
 void parse_expression (struct entity* list_entities,int count_entites, char* expression)
 {
   char* sep = " ";
@@ -18,7 +16,7 @@ void parse_expression (struct entity* list_entities,int count_entites, char* exp
   }
 }
 
-int parser(struct entity list_entities[])
+int parser(struct entity list_entities[], FILE* file)
 {
   char symbol = '0'; 
   int is_end = 0;
@@ -29,7 +27,7 @@ int parser(struct entity list_entities[])
 
   do
   {
-    symbol = getc(stdin);
+    symbol = getc(file);
     if (symbol == ' ')
       continue;
     if (symbol == '=' || symbol == '+' || symbol == '\n')

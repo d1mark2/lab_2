@@ -1,16 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "parser.h"
 #include <math.h>
 
 
-int list_letters[26] = {0};
-int no_zero[10] = {0};
+int list_letters[26];
+int no_zero[10];
+int success;
 int count_entities;
 struct entity list_entities[8];
 
+void null_vars ()
+{
+  memset(list_letters, 0, 26*sizeof(int));
+  memset(no_zero, 0, 10*sizeof(int));
+  memset(list_entities, 0, 8*sizeof(struct entity));
+  memset(letter_indexes, 0, 26*sizeof(int));
+  success = 0;
+  count_entities = 0;
+}
 
-void print_result(int* result) {
+void print_result(int* result) 
+{
+  for (int i = 0; i < count_entities-1; i++) 
+  { 
+    if (i)
+      printf("+ %s ", list_entities[i].word);
+    else
+      printf("%s ", list_entities[i].word);
+  }
+  printf("= %s\n", list_entities[count_entities-1].word);
+
 
   for (int i = 0; i < count_entities-1; i++) 
   { 
@@ -54,10 +76,11 @@ int check_permutation(int* permutation, int count_entities)
 
 void permutations(int* permutation, int unique_letters, int current_len, int* used)
 {
+  if (success) return;
   if (current_len == unique_letters)
   {
     if (check_permutation(permutation, count_entities))
-      exit(0);
+      success = 1;
     return;
   }
   for (int i = 0; i < 10; i++)
@@ -72,24 +95,41 @@ void permutations(int* permutation, int unique_letters, int current_len, int* us
   }
 }
 
-int main () 
+int main (int argc, char* argv[]) 
 {
-  count_entities = parser(list_entities);
-  int* permutation;
-  int* used;
+  FILE* input = (argc > 1) ? fopen(argv[1], "r") : stdin;
+  int count = (argc > 1) ? atoi(argv[2]) : 1;
 
-  if (!count_entities)
-    printf("Error in parser");
+  while (count)
+  {
+    null_vars();
+    clock_t start = clock();
+    count_entities = parser(list_entities, input);
+    int* permutation;
+    int* used;
+    int unique_letters;
 
-  int unique_letters = set_index_letter(list_entities, count_entities, no_zero);
-  if (unique_letters > 10)
-    printf("%d too many unique letters", unique_letters);
+    if (!count_entities)
+      printf("Error in parser");
 
-  permutation = malloc(sizeof(int)*unique_letters);
-  used = calloc(10, sizeof(int));
+    unique_letters = set_index_letter(list_entities, count_entities, no_zero);
+    if (unique_letters > 10)
+      printf("%d too many unique letters", unique_letters);
 
-  permutations(permutation, unique_letters, 0, used);
+    permutation = malloc(sizeof(int)*unique_letters);
+    used = calloc(10, sizeof(int));
 
-  free(list_entities[0].word);
+    permutations(permutation, unique_letters, 0, used);
+
+    clock_t end = clock();
+    double cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("solve time: %lf\n\n", cpu_time_used); 
+
+    free(list_entities[0].word);
+    free(permutation);
+    free(used);
+    count--;
+  } 
+
   return 0;
 }
