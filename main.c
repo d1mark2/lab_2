@@ -8,6 +8,8 @@
 
 int list_letters[26];
 int no_zero[10];
+int min_digit[10];
+int max_digit[10];
 int pow10[10] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 int success;
 int count_entities;
@@ -20,6 +22,8 @@ void null_vars ()
   memset(no_zero, 0, 10*sizeof(int));
   memset(list_entities, 0, 8*sizeof(struct entity));
   memset(letter_indexes, 0, 26*sizeof(int));
+  memset(min_digit, 0, 10*sizeof(int));
+  memset(max_digit, 0, 10*sizeof(int));
   success = 0;
   count_entities = 0;
 }
@@ -74,15 +78,13 @@ int check_permutation(int* permutation, int count_entities)
   int digit_sum = 0;
   int digit_answer = 0;
 
-  for (int i = 0; i < 11; i++)
+  for (int i = 0; i < 10; i++)
   {
     for (int j = 0; j < count_entities-1; j++)
     {
       digit_sum += get_entity_digit(permutation, j, i);
     }
     digit_answer = get_entity_digit(permutation, count_entities-1, i);
-
-    // printf("%d %d %d %d\n", permutation[0],permutation[1], permutation[2],permutation[3]);
 
     if ((digit_sum % 10) == digit_answer)
       digit_sum /= 10;
@@ -92,21 +94,41 @@ int check_permutation(int* permutation, int count_entities)
   return 1;
 }
 
+void set_digit_bounds(int unique_letters)
+{
+  for (int i = 0; i < unique_letters; i++)
+  {
+    min_digit[i] = no_zero[i] ? 1 : 0;
+    max_digit[i] = 9;
+  }
+
+  int end = count_entities - 1;
+  int max_len = 0;
+  for (int i = 0; i < end; i++)
+    if (list_entities[i].len > max_len)
+      max_len = list_entities[i].len;
+
+  struct entity* result = &list_entities[count_entities - 1];
+  if (result->len > max_len)
+  {
+    int lead = result->value / pow10[result->len - 1];
+    min_digit[lead] = 1;
+    max_digit[lead] = end - 1;
+  }
+}
+
 int permutations(int* permutation, int unique_letters, int current_len, int* used)
 {
   if (success) return success; 
   if (current_len == unique_letters)
   {
     if (check_permutation(permutation, count_entities))
-    {
       success = 1;
-      // print_result(permutation);
-    }
     return success;
   }
-  for (int i = 0; i < 10 && !success; i++)
+  for (int i = min_digit[current_len]; i <= max_digit[current_len] && !success; i++)
   {
-    if (!success && !used[i] && (!no_zero[current_len] + i))
+    if (!success && !used[i])
     {
       used[i] = 1;
       permutation[current_len] = i;
@@ -135,6 +157,7 @@ int main (int argc, char* argv[])
       printf("Error in parser");
 
     unique_letters = set_index_letter(list_entities, count_entities, no_zero);
+    set_digit_bounds(unique_letters);
     if (unique_letters > 10)
       printf("%d too many unique letters", unique_letters);
 
