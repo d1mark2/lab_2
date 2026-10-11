@@ -24,7 +24,19 @@ void null_vars ()
   count_entities = 0;
 }
 
-void print_result(int* result) 
+int get_entity_value(int* permutation, int entity_index)
+{
+  int value = 0;
+  int number = list_entities[entity_index].value;
+  for (int i = 0; i < list_entities[entity_index].len; i++)
+  {
+    value += permutation[(number % 10)]*pow10[i];
+    number /= 10;
+  }
+  return value;
+}
+
+void print_result(int* permutation) 
 {
   for (int i = 0; i < count_entities-1; i++) 
   { 
@@ -39,62 +51,70 @@ void print_result(int* result)
   for (int i = 0; i < count_entities-1; i++) 
   { 
     if (i)
-      printf("+ %d ", result[i]);
+      printf("+ %d ", get_entity_value(permutation, i));
     else
-      printf("%d ", result[i]);
+      printf("%d ", get_entity_value(permutation, i));
   }
-  printf("= %d\n", result[count_entities-1]);
+  printf("= %d\n", get_entity_value(permutation, count_entities-1));
 }
 
-int get_entity_value(int* permutation, int entity_index)
+
+
+int get_entity_digit(int* permutation, int entity_index, int index)
 {
-  int value = 0;
   int number = list_entities[entity_index].value;
-  for (int i = 0; i < list_entities[entity_index].len; i++)
-  {
-    value += permutation[(number % 10)]*pow10[i];
-    number /= 10;
-  }
-  return value;
+  number /= pow10[index];
+  if (list_entities[entity_index].len <= index)
+    return 0;
+  return permutation[(number % 10)];
 }
 
 int check_permutation(int* permutation, int count_entities)
 {
-  int result[8] = {0};
-  int sum_results = 0;
-  for (int i = 0; i < count_entities-1; i++)
+  int digit_sum = 0;
+  int digit_answer = 0;
+
+  for (int i = 0; i < 11; i++)
   {
-    result[i] = get_entity_value(permutation, i);
-    sum_results += result[i];
-  }
-  result[count_entities-1] = get_entity_value(permutation, count_entities-1);
-  if (sum_results == result[count_entities-1])
+    for (int j = 0; j < count_entities-1; j++)
     {
-      print_result(result);
-      return 1;
+      digit_sum += get_entity_digit(permutation, j, i);
     }
-  return 0;
+    digit_answer = get_entity_digit(permutation, count_entities-1, i);
+
+    // printf("%d %d %d %d\n", permutation[0],permutation[1], permutation[2],permutation[3]);
+
+    if ((digit_sum % 10) == digit_answer)
+      digit_sum /= 10;
+    else 
+      return 0;
+  }
+  return 1;
 }
 
-void permutations(int* permutation, int unique_letters, int current_len, int* used)
+int permutations(int* permutation, int unique_letters, int current_len, int* used)
 {
-  if (success) return;
+  if (success) return success; 
   if (current_len == unique_letters)
   {
     if (check_permutation(permutation, count_entities))
+    {
       success = 1;
-    return;
+      // print_result(permutation);
+    }
+    return success;
   }
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 10 && !success; i++)
   {
-    if (!used[i] && (!no_zero[current_len] + i))
+    if (!success && !used[i] && (!no_zero[current_len] + i))
     {
       used[i] = 1;
       permutation[current_len] = i;
-      permutations(permutation, unique_letters, current_len+1, used);
+      success = permutations(permutation, unique_letters, current_len+1, used);
       used[i] = 0;
     }
   }
+  return success;
 }
 
 int main (int argc, char* argv[]) 
@@ -121,9 +141,12 @@ int main (int argc, char* argv[])
     permutation = malloc(sizeof(int)*unique_letters);
     used = calloc(10, sizeof(int));
 
-    permutations(permutation, unique_letters, 0, used);
+    success = permutations(permutation, unique_letters, 0, used);
 
     clock_t end = clock();
+
+    if (success)
+      print_result(permutation);
     double cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("solve time: %lf\n\n", cpu_time_used); 
 
