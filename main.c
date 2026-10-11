@@ -8,9 +8,11 @@
 
 int list_letters[26];
 int no_zero[10];
+int pow10[10] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 int success;
 int count_entities;
 struct entity list_entities[8];
+
 
 void null_vars ()
 {
@@ -50,7 +52,7 @@ int get_entity_value(int* permutation, int entity_index)
   int number = list_entities[entity_index].value;
   for (int i = 0; i < list_entities[entity_index].len; i++)
   {
-    value += permutation[(number % 10)]*(int)pow(10, i);
+    value += permutation[(number % 10)]*pow10[i];
     number /= 10;
   }
   return value;
@@ -58,7 +60,7 @@ int get_entity_value(int* permutation, int entity_index)
 
 int check_permutation(int* permutation, int count_entities)
 {
-  int* result = calloc(count_entities, sizeof(int));
+  int result[8] = {0};
   int sum_results = 0;
   for (int i = 0; i < count_entities-1; i++)
   {
